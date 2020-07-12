@@ -15,16 +15,45 @@ plugins:
 
 provider:
   name: aws
+  stage: prod
+  region: ap-northeast-2
   runtime: nodejs12.x
   apiGateway:
     minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    TABLE_NAME: Connections
+  logs:
+    websocket: true
 
 functions:
   hello:
-    handler: handler.hello
+    connectHandler:
+    handler: handler.connect
     events:
-      - http:
-          method: get
-          path: hello
+      - websocket:
+        route: $connect
+  #disconnectHandler:
+    #handler: handler.disconnectHandler
+    #events:
+      #- websocket:
+          #route: $disconnect
+
+resources: # CloudFormation template syntax from here on.
+  Resources:
+    ConnectionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Connections
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+          #- AttributeName: channelId
+            #AttributeType: S
+          #- AttributeName: peerId
+            #AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        # TODO Secondary indexes

@@ -1,12 +1,18 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
-import 'source-map-support/register';
+import { DynamoDB } from 'aws-sdk';
+//import 'source-map-support/register';
 
-export const hello: APIGatewayProxyHandler = async (event, _context) => {
+export const connect: APIGatewayProxyHandler = async event => {
+  await new DynamoDB()
+    .putItem({
+      TableName: process.env.TABLE_NAME,
+      Item: {
+        connectionId: { S: event.requestContext.connectionId },
+      },
+    })
+    .promise()
   return {
     statusCode: 200,
-    body: JSON.stringify({
-      message: 'Go Serverless Webpack (Typescript) v1.0! Your function executed successfully!',
-      input: event,
-    }, null, 2),
-  };
+    body: "OK",
+  }
 }
